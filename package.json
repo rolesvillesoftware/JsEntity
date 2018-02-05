@@ -1,0 +1,41 @@
+{
+  "name": "jsentity",
+  "version": "1.0.0",
+  "description": "JavaScript ORM Entity Manager",
+  "main": "index.js",
+  "scripts": {
+    "test": "jasmine-ts JASMINE_CONFIG_PATH=spec/support/jasmine.json"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rolesvillesoftware/JsEntity.git"
+  },
+  "keywords": [
+    "JavaScript",
+    "ORM",
+    "EntityFramework"
+  ],
+  "author": "Rolesville Software LLC",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/rolesvillesoftware/JsEntity/issues"
+  },
+  "homepage": "https://github.com/rolesvillesoftware/JsEntity#readme",
+  "dependencies": {
+    "mysql": "^2.15.0",
+    "rxjs": "^5.5.6"
+  },
+  "devDependencies": {
+    "@types/jasmine": "^2.8.3",
+    "@types/node": "^8.5.2",
+    "@types/rx": "^4.1.1",
+    "jasmine": "^2.8.0",
+    "jasmine-core": "^2.8.0",
+    "jasmine-reporters": "^2.3.0",
+    "jasmine-spec-reporter": "^4.2.1",
+    "jasmine-ts": "^0.2.1",
+    "jasmine-ts-console-reporter": "^3.1.1",
+    "ts-node": "^4.1.0",
+    "typescript": "^2.6.2"
+  }
+}

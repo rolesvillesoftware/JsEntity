@@ -1,0 +1,24 @@
+{
+    "files.exclude": {
+        "**/.git": true,
+        "**/.svn": true,
+        "**/.hg": true,
+        "**/CVS": true,
+        "**/.DS_Store": true,
+        "**/*.js": {
+            "when": "$(basename).ts"
+        },
+        "**/*.map": {
+            "when": "$(basename)"
+        },
+        "**/*.d.ts": {
+            "when": "$(basename).ts"
+        }
+    },
+    "files.trimTrailingWhitespace": true,
+    "files.insertFinalNewline": true,
+    "cSpell.words": [
+        "Usmle",
+        "POJSO"
+    ]
+}

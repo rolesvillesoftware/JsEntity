@@ -22,6 +22,6 @@ export class DbSet<T> implements IBaseQuery<T> {
         this.entity.fields.forEach(field => {
             source[field.propertyName] = null;
         });
-        return this.context.attach(ObjectBuilder.createObject(this.pojso, source, this.entity.fields, true));
+        return this.context.attach(ObjectBuilder.createObject(this.pojso, source, this.entity, true));
     }
 }

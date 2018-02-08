@@ -23,9 +23,11 @@ export class TestContext extends Context {
     protected modelBuilder(model: ContextModel): void {
         let entity = model
             .add("testModel", TestModel, "TestModel", "JsEntityTest")
-            .map({ dbId: "id", name: "name", date: "startDate" })
-            .defineKey("dbId");
-        ;
+            .map({
+                dbId: { fieldName: "id", propertyName: "dbId", primaryKey: true, identity: true },
+                name: "name",
+                date: "startDate"
+            });
     }
 }
 
@@ -110,3 +112,35 @@ describe('Query Execute', () => {
             .catch(error => { throw new Error(error); });
     });
 });
+
+describe('Create Entity', () => {
+    const context = new TestContext(connectionString);
+    let obj = context.testModel.create();
+    it('Test entity object creation', () => {
+        expect(obj).toBeDefined();
+        expect(obj["_$$update$$"]).toBeFalsy();
+        expect(obj["_$$isDirty$$"]).toBeFalsy();
+        expect((context as any)["_attached"].count).toEqual(1);
+    });
+
+    it('Test adding values', () => {
+        obj.name = "Test Name 1";
+        expect(obj.name).toBeDefined();
+        expect(obj.name).toEqual("Test Name 1");
+        expect(obj["_$$isDirty$$"]).toBeTruthy();
+        expect(obj["_$$update$$"]).toBeFalsy();
+
+        obj.date = new Date();
+        expect((context as any)["_attached"].count).toEqual(1);
+    });
+
+    it('Test physical save', (done) => {
+        context.saveChanges()
+            .catch(error => { throw new Error(error); })
+            .then(data => {
+                expect(obj.dbId).toBeDefined();
+                expect(obj.dbId).toBeGreaterThan(-1);
+                done();
+            });
+    }, 30000);
+})

@@ -9,12 +9,32 @@ export class SqlGenerator {
     private _tables = new Collection<string>();
     private _filters = new Collection<string>();
 
-    private _binds = new Collection<string | number>();
+    private _binds = new Collection<string | number | {}>();
 
     constructor(private sqlType: sqlType) {}
     get sql(): string {
-        if (this.sqlType === "select") { return this.selectSql(); }
+        switch (this.sqlType) {
+            case "select":
+                return this.selectSql();
+            case "insert":
+                return this.insertSql();
+        }
+    }
 
+    get sqlObj(): any {
+        const sqlObject= {
+            sql: this.sql,
+            timeout: 15000,
+        } as any;
+
+        if (this._binds !=  null && this._binds.count > 0) {
+            if (this._binds.count === 1) {
+                sqlObject.values = this._binds.toArray()[0];
+            } else {
+                sqlObject.values = this._binds;
+            }
+        }
+        return sqlObject;
     }
 
     private selectSql(): string {
@@ -36,7 +56,13 @@ export class SqlGenerator {
         }
         return sql.join("\r\n");
     }
-
+    private insertSql(): string {
+        if (this._tables == null) {
+            if (this._tables.count === 0) { throw new Error("No table definition found for insert"); }
+            if (this._tables.count > 1) { throw new Error("Currently only one table can be defined for an insert"); }
+        }
+        return `insert into ${this._tables.toArray()[0]} set ?`
+    }
     clearFields(): SqlGenerator {
         this._fields.clear();
         return this;
@@ -45,11 +71,17 @@ export class SqlGenerator {
         this._fields.add(field);
         return this;
     }
-    addFrom(from: string) {
+    addFrom(from: string): SqlGenerator {
         this._tables.add(from);
+        return this;
     }
-    addWhere(clause: string) {
+    addWhere(clause: string): SqlGenerator {
         this._filters.add(clause);
+        return this;
+    }
+    addBind(bindobj: {}): SqlGenerator {
+        this._binds.add(bindobj);
+        return this;
     }
 
 }

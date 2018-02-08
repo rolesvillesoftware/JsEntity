@@ -1,5 +1,7 @@
 import { DbSet } from "./DbSet";
 import { FunctionParser } from "./FunctionParser";
+import { SqlGenerator } from "./SqlGenerator";
+import { Context } from "./Context";
 
 export interface IEntity {
     entityName: string;
@@ -11,6 +13,7 @@ export interface IFieldMap {
     propertyName: string;
     fieldName: string;
     primaryKey: boolean;
+    identity: boolean;
     sql: string;
 }
 
@@ -18,6 +21,7 @@ export class FieldMap implements IFieldMap {
     propertyName: string;
     fieldName: string;
     primaryKey: boolean;
+    identity: boolean;
 
     get sql(): string {
         return `${this.fieldName} as ${this.propertyName}`;
@@ -38,13 +42,28 @@ export class Entity<T> implements IEntity {
     public tableName: string;
     public schema: string;
 
-    constructor(private parentContext, public entityName: string, public pojso: new () => T, tableName?: string, schema?: string) {
+    get qualifiedTable(): string {
+        const tableName = [];
+        if (this.schema != null && this.schema.length > 0) { tableName.push(this.schema); }
+        tableName.push(this.tableName)
+        return tableName.join(".");
+    }
+    constructor(private parentContext: Context, public entityName: string, public pojso: new () => T, tableName?: string, schema?: string) {
         this.tableName = tableName || entityName;
         this.schema = schema;
 
         this.parentContext[entityName] = new DbSet(pojso, this, this.parentContext);
     }
 
+    private validateMap(map: any): {} {
+        if (map.fieldName == null && map.propertyName == null) { throw new Error("Field name and/or property name must be defined"); }
+        if (map.fieldName == null) { map.fieldName = map.propertyName; }
+        if (map.propertyName == null) { map.propertyName = map.fieldName; }
+        if (map.primaryKey == null) { map.primaryKey = false; }
+        if (map.identify == null) { map.identify = false; }
+
+        return map;
+    }
     /**
      * Create the mapping of the fields to POJSO
      * @param maps Object containing the map definition
@@ -57,16 +76,14 @@ export class Entity<T> implements IEntity {
             let map: string | IFieldMap = maps[element];
             if (map != null) {
                 if (typeof (map) === "string") {
-                    let field: IFieldMap = Object.assign(new FieldMap(), {
+                    map = {
                         propertyName: element,
-                        fieldName: map,
-                        primaryKey: false
-                    });
-                    this._fieldMap[element] = field;
-                    this._fields.push(field);
-                } else {
-                    this._fields.push(Object.assign(new FieldMap(), map));
+                        fieldName: map
+                    } as IFieldMap;
                 }
+                this.validateMap(map);
+                this._fieldMap[element] = map;
+                this._fields.push(Object.assign(new FieldMap(), map));
             }
         });
         return this;
@@ -99,5 +116,33 @@ export class Entity<T> implements IEntity {
             });
         }
         return this;
+    }
+
+    /**
+     * Used to dynamically build the insert bind object
+     */
+    private buildInsertBind(pojso: any): {} {
+        const bindObj = {};
+        this._fields.forEach(field => {
+            if (pojso[field.propertyName] != null) {
+                bindObj[field.fieldName] = pojso[field.propertyName];
+            }
+        });
+        return bindObj;
+    }
+
+    async insert<T>(pojso: T): Promise<T> {
+        let sql = new SqlGenerator("insert");
+        sql.addFrom(this.qualifiedTable).addBind(this.buildInsertBind(pojso));
+        const results = await this.parentContext.Database.runQuery(sql);
+
+        if (results != null && results.results.insertId != null) {
+            const identityField = this.fields.find(item => item.identity);
+            if (identityField != null) {
+                pojso[identityField.propertyName] = results.results.insertId;
+            }
+        }
+
+        return pojso;
     }
 }

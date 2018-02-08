@@ -1,4 +1,5 @@
 import * as mysql from "mysql";
+import { SqlGenerator } from "./SqlGenerator";
 
 export interface IQueryResult {
     results: any;
@@ -41,7 +42,7 @@ export class MySqlConnection {
         if (this.debug) this.logger.log(`Connection pool to ${connectionString.host} created`);
     }
 
-    public runQuery(sql: any): Promise<IQueryResult> {
+    public runQuery(sqlGenerator: SqlGenerator): Promise<IQueryResult> {
         return new Promise<{ results: any; fields: mysql.FieldInfo[] }>(
             (response, reject) => {
                 this.pool.getConnection(
@@ -51,7 +52,7 @@ export class MySqlConnection {
                             return;
                         }
 
-                        connection.query(sql, (err, results, fields) => {
+                        connection.query(sqlGenerator.sqlObj, (err, results, fields) => {
                             connection.release();
                             if (err) {
                                 reject(err);

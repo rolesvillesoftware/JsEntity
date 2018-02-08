@@ -17,15 +17,9 @@ export class ActiveQuery<T> implements IActiveQuery<T> {
 
     constructor(private pojso: new () => T, private entity: Entity<T>, private context: Context) {
         this.sqlGen = new SqlGenerator("select");
-        this.setTable(this.entity.schema, this.entity.tableName);
+        this.sqlGen.addFrom(entity.qualifiedTable)
     }
 
-    private setTable(schema?: string, tableName?: string) {
-        let from = "";
-        if (schema != null && schema.length > 0) { from += `${schema}.`; }
-        from += tableName || '';
-        this.sqlGen.addFrom(from);
-    }
     /**
      * Initiates and/or sets the fields to return
      *
@@ -56,7 +50,7 @@ export class ActiveQuery<T> implements IActiveQuery<T> {
         return Observable.create(observer => {
             this.context
                 .Database
-                .runQuery(this.sqlGen.sql)
+                .runQuery(this.sqlGen)
                 .catch(error => {
                     observer.error(error);
                 })
@@ -65,7 +59,7 @@ export class ActiveQuery<T> implements IActiveQuery<T> {
                     else {
                         const collection = new Collection<T>();
                         data.results.forEach(element => {
-                            const obj: T = ObjectBuilder.createObject(this.entity.pojso, element, this.entity.fields, false);
+                            const obj: T = ObjectBuilder.createObject(this.entity.pojso, element, this.entity, false);
                             collection.add(obj);
                             this.context.attach(obj);
                         });

@@ -67,11 +67,18 @@ export abstract class Context {
         }
     }
 
-    saveChanges() {
+    async saveChanges(): Promise<any> {
         if (this._attached == null || this._attached.count === 0) { return; }
-        this._attached.filter(item => item[" _$$isDirty$$"]).forEach(entity => {
+           const dirty = this._attached.filter(item => item["_$$isDirty$$"]);
+           if (dirty != null) {
+               for (const obj of dirty) {
+                    if (obj["_$$update$$"]) {
 
-        });
+                    } else {
+                        await obj["_$$entity$$"].insert(obj);
+                    }
+               }
+           }
     }
     dispose() {
         this._dbConnection.dispose();

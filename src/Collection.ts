@@ -25,7 +25,7 @@ export class Collection<T> {
         return true;
     }
 
-    filter(filter: (item: T) => boolean ): T[] {
+    filter(filter: (item: T, index?: number) => any ): T[] {
         return this._collection.filter(filter);
     }
 

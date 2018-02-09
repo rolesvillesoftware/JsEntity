@@ -14,8 +14,13 @@
       "moduleResolution": "node",            /* Specify module resolution strategy: 'node' (Node.js) or 'classic' (TypeScript pre-1.6). */
       "experimentalDecorators": true,        /* Enables experimental support for ES7 decorators. */
       "emitDecoratorMetadata": true,         /* Enables experimental support for emitting type metadata for decorators. */
-      "outDir": "./dist"
+      "outDir": "./dist",
+      "sourceRoot": "./src",
+      "listEmittedFiles": true
     },
+    "include": [
+      "./index.ts"
+    ],
     "compileOnSave": true,
     "exclude": [
       "./node_modules/*"

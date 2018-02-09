@@ -2,6 +2,7 @@ import { DbSet } from "./DbSet";
 import { FunctionParser } from "./FunctionParser";
 import { SqlGenerator } from "./SqlGenerator";
 import { Context } from "./Context";
+import { ObjectBuilder } from "./ObjectBuilder";
 
 export interface IEntity {
     entityName: string;
@@ -141,8 +142,18 @@ export class Entity<T> implements IEntity {
             if (identityField != null) {
                 pojso[identityField.propertyName] = results.results.insertId;
             }
+            ObjectBuilder.resetEntity(pojso);
         }
 
+        return pojso;
+    }
+
+    async update<T>(pojso: T): Promise<T> {
+        let sql = new SqlGenerator("update");
+        sql.setForUpdate(this.qualifiedTable, pojso, this.fields);
+        const results = await this.parentContext.Database.runQuery(sql);
+
+        ObjectBuilder.resetEntity(pojso);
         return pojso;
     }
 }

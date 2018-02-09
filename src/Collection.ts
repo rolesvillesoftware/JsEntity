@@ -19,13 +19,13 @@ export class Collection<T> {
 
     remove(obj: T): boolean {
         const removedItem = this._collection.find(item => item === obj);
-        if (removedItem == null ) { return false; }
+        if (removedItem == null) { return false; }
 
         this._collection = this._collection.filter(item => item !== removedItem);
         return true;
     }
 
-    filter(filter: (item: T, index?: number) => any ): T[] {
+    filter(filter: (item: T, index?: number) => any): T[] {
         return this._collection.filter(filter);
     }
 
@@ -34,5 +34,12 @@ export class Collection<T> {
     }
     toArray(): T[] {
         return this._collection;
+    }
+    get(position?: number): T {
+        if (this._collection.length > position) {
+            return this._collection[position];
+        } else {
+            throw new Error("Collection Index out of range");
+        }
     }
 }

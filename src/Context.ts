@@ -1,10 +1,10 @@
 import { ContextModel } from "./ContextModel";
 import { Connection } from "./Connection";
-import { IEntity } from "./Entity";
+import { IEntity, } from "./Entity";
 import { DbSet } from "./DbSet";
 import { MySqlConnection, IConnectionString } from "./MySqlConnection";
 import { Collection } from "./Collection";
-import { ObjectBuilder } from "./ObjectBuilder";
+import { ObjectBuilder, entityFlags } from "./ObjectBuilder";
 
 export { IConnectionString, IQueryResult } from "./MySqlConnection";
 
@@ -69,13 +69,13 @@ export abstract class Context {
 
     async saveChanges(): Promise<any> {
         if (this._attached == null || this._attached.count === 0) { return; }
-           const dirty = this._attached.filter(item => item["_$$isDirty$$"]);
+           const dirty = this._attached.filter(item => item[entityFlags.isDirty]);
            if (dirty != null) {
                for (const obj of dirty) {
-                    if (obj["_$$update$$"]) {
-
+                    if (obj[entityFlags.isUpdate]) {
+                        await obj[entityFlags.entity].update(obj);
                     } else {
-                        await obj["_$$entity$$"].insert(obj);
+                        await obj[entityFlags.entity].insert(obj);
                     }
                }
            }

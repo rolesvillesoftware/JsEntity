@@ -2,6 +2,7 @@ import * as jasmineReporters from "jasmine-reporters";
 import { Context, IConnectionString } from "../src/Context";
 import { ContextModel } from "../src/ContextModel";
 import { DbSet } from "../src/DbSet";
+import { entityFlags } from "../src/ObjectBuilder";
 
 var connectionString: IConnectionString = {
     "host": "mysql.rolesvillesoftware.com",
@@ -92,25 +93,32 @@ describe('Query Execute', () => {
         query.execute()
             .toPromise()
             .then(data => {
-                expect(data.count).toBeGreaterThan(0);
-                data.forEach(element => {
-                    expect((element as any)._$$proxy$$).toBeTruthy();
-                    expect((element as any)._$$isDirty$$).toBeFalsy();
-                });
-                expect((context as any)["_attached"].count).toEqual(data.count);
+                try {
+                    expect(data.count).toBeGreaterThan(0);
+                    data.forEach(element => {
+                        expect((element as any)[entityFlags.isProxy]).toBeTruthy();
+                        expect((element as any)[entityFlags.isDirty]).toBeFalsy();
+                    });
+                    expect((context as any)["_attached"].count).toEqual(data.count);
 
-                /** test changing an element */
-                const tObj = data.toArray()[0];
-                tObj.name = "new name";
-                expect((tObj as any)._$$isDirty$$).toBeTruthy();
+                    /** test changing an element */
+                    const tObj = data.get(0);
+                    tObj.name = "new name";
+                    expect((tObj as any)[entityFlags.isDirty]).toBeTruthy();
 
-                context.dispose();
-                expect((context as any)["_attached"].count).toEqual(0);
-
-                done();
+                    context.dispose();
+                    expect((context as any)["_attached"].count).toEqual(0);
+                } catch (ex) {
+                    fail(ex);
+                } finally {
+                    done();
+                }
             })
-            .catch(error => { throw new Error(error); });
-    });
+            .catch(error => {
+                fail(error);
+                done();
+            });
+    }, 120000);
 });
 
 describe('Create Entity', () => {
@@ -118,8 +126,8 @@ describe('Create Entity', () => {
     let obj = context.testModel.create();
     it('Test entity object creation', () => {
         expect(obj).toBeDefined();
-        expect(obj["_$$update$$"]).toBeFalsy();
-        expect(obj["_$$isDirty$$"]).toBeFalsy();
+        expect(obj[entityFlags.isUpdate]).toBeFalsy();
+        expect(obj[entityFlags.isDirty]).toBeFalsy();
         expect((context as any)["_attached"].count).toEqual(1);
     });
 
@@ -127,20 +135,66 @@ describe('Create Entity', () => {
         obj.name = "Test Name 1";
         expect(obj.name).toBeDefined();
         expect(obj.name).toEqual("Test Name 1");
-        expect(obj["_$$isDirty$$"]).toBeTruthy();
-        expect(obj["_$$update$$"]).toBeFalsy();
+        expect(obj[entityFlags.isDirty]).toBeTruthy();
+        expect(obj[entityFlags.isUpdate]).toBeFalsy();
 
         obj.date = new Date();
+        expect(obj[entityFlags.isDirty]).toBeTruthy();
         expect((context as any)["_attached"].count).toEqual(1);
     });
 
     it('Test physical save', (done) => {
         context.saveChanges()
-            .catch(error => { throw new Error(error); })
-            .then(data => {
-                expect(obj.dbId).toBeDefined();
-                expect(obj.dbId).toBeGreaterThan(-1);
+            .catch(error => {
+                fail(error);
                 done();
+            })
+            .then(data => {
+                try {
+                    expect(obj.dbId).toBeDefined();
+                    expect(obj.dbId).toBeGreaterThan(-1);
+
+                    expect(obj[entityFlags.isDirty]).toBeFalsy();
+                    expect(obj[entityFlags.isUpdate]).toBeTruthy();
+                } catch (ex) {
+                    fail(ex);
+                } finally {
+                    done();
+                }
             });
-    }, 30000);
+    }, 120000);
+
+    it('Test key lock', () => {
+        expect(() => {
+            obj.dbId = 9999;
+        }).toThrowError("Unable to update key field. Please create/clone a new record.");
+    });
+
+    it(`Test Update`, (done) => {
+        expect(obj.name).toEqual("Test Name 1");
+        obj.name = "New Object Name";
+        const origId = obj.dbId;
+        expect(obj[entityFlags.isDirty]).toBeTruthy();
+        context.saveChanges()
+            .catch(error => {
+                fail(error);
+                done();
+            })
+            .then(data => {
+                try {
+                    expect(obj.name).toEqual("New Object Name");
+                    expect(obj.dbId).toEqual(origId);
+                    expect(obj[entityFlags.isDirty]).toBeFalsy();
+                    expect(obj[entityFlags.isUpdate]).toBeTruthy();
+                } catch (ex) {
+                    fail(ex);
+                } finally {
+                    done();
+                }
+            });
+    }, 120000);
 })
+
+
+
+

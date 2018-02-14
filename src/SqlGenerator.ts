@@ -31,7 +31,6 @@ export class SqlGenerator {
                 return this.updateSql();
             }
     }
-
     get sqlObj(): any {
         const sqlObject = {
             sql: this.sql,
@@ -47,7 +46,6 @@ export class SqlGenerator {
         }
         return sqlObject;
     }
-
     private selectSql(): string {
         if (this.sqlType == null || this._fields == null || this._fields.count === 0 ||
             this._tables == null || this._tables.count === 0) { return ""; }

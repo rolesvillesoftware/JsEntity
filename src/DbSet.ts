@@ -13,8 +13,8 @@ export class DbSet<T> implements IBaseQuery<T> {
         return new ActiveQuery(this.pojso, this.entity, this.context).select(fields);
     }
 
-    where(clause: (item: T) => boolean): IActiveQuery<T> {
-        return new ActiveQuery(this.pojso, this.entity, this.context).select().where(clause);
+    where<B>(clause: (item: T, binds: B) => boolean, bindObj?: B): IActiveQuery<T> {
+        return new ActiveQuery(this.pojso, this.entity, this.context).select().where(clause, bindObj);
     }
 
     create(): T {

@@ -11,6 +11,8 @@ import { ObjectBuilder } from "./ObjectBuilder";
 export class ActiveQuery<T> implements IActiveQuery<T> {
 
     private sqlGen: SqlGenerator;
+    private bindIndex = 0;
+
     get sql(): string {
         return this.sqlGen.sql;
     }
@@ -19,7 +21,6 @@ export class ActiveQuery<T> implements IActiveQuery<T> {
         this.sqlGen = new SqlGenerator("select");
         this.sqlGen.addFrom(entity.qualifiedTable)
     }
-
     /**
      * Initiates and/or sets the fields to return
      *
@@ -38,7 +39,7 @@ export class ActiveQuery<T> implements IActiveQuery<T> {
      * Sets up the where clause for the
      * @param clause Where clause to be added;
      */
-    where(clause: (item: T) => boolean): IActiveQuery<T> {
+    where<B>(clause: (item: T, binds: B) => boolean, bindObj?: B): IActiveQuery<T> {
         this.sqlGen.addWhere(new WhereParser(clause, this.entity).sql);
         return this;
     }

@@ -1,4 +1,5 @@
 import { FunctionParser } from "../src/FunctionParser";
+import { WhereParser } from "../src/WhereParser";
 
 export class TestObject {
     fieldA: string;
@@ -7,22 +8,19 @@ export class TestObject {
     FieldD: Date;
 }
 
-describe('Test Build Object feature', () => {
-    const parser = new FunctionParser<TestObject>();
+describe('Test Function Parser', () => {
+    const parser = new FunctionParser<TestObject, any>((item, binds) => { item.fieldA === binds.bindA }).parse();
     it('Test Parser Creation', () => {
         expect(parser).toBeDefined();
     });
 
-    it('Object mapper', () => {
-        const map = parser.buildObjectMapping(item => { return { fieldA: item.fieldA } });
-        expect(map.length).toEqual(1);
+    it('Test variable stripping', () => {
+        expect(parser.fieldIdentifier).toEqual("item");
+        expect(parser.bindIdentifier).toEqual("binds");
     });
 
-    it (`Field finder`, () => {
-        let fields = parser.getFields(item => item.fieldA === "W" && item.fieldB === 43 && item.FieldD === new Date("12/31/2017"))
-        expect(fields.length).toEqual(3);
-
-        fields = parser.getFields(item => item.fieldA === "W" && item.fieldB === 43 && item.FieldD === new Date(12/31/2017))
-        expect(fields.length).toEqual(3);
+    it ("Test sql build", () => {
+        expect(parser.sql).toEqual(":fieldA: = @bindA@")
     });
 });
+

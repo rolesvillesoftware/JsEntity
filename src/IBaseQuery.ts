@@ -8,5 +8,5 @@ export interface IActiveQuery<T> extends IBaseQuery<T> {
 
 export interface IBaseQuery<T> {
     select(fields?: string | string[]): IActiveQuery<T>;
-    where(clause: (item: T) => boolean ): IActiveQuery<T>;
+    where<B>(clause: (item: T, binds: B) => boolean, bindObj?: B): IActiveQuery<T>;
 }

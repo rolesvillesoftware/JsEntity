@@ -19,7 +19,7 @@
     "emitDecoratorMetadata": true, /* Enables experimental support for emitting type metadata for decorators. */
     "outDir": "./dist",
     "sourceRoot": "./src",
-    "listEmittedFiles": true
+    "listEmittedFiles": false
   },
   "include": [
     "./index.ts",

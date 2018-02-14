@@ -32,7 +32,7 @@ export class TestContext extends Context {
     }
 }
 
-describe('Context Model Builder', () => {
+xdescribe('Context Model Builder', () => {
     let context = new TestContext(connectionString);
     it('Test Context Creation', () => {
         expect(context.entityDefinitions.length).toEqual(1);
@@ -51,7 +51,7 @@ describe('Context Model Builder', () => {
     context.dispose();
 });
 
-describe('Query Builder', () => {
+xdescribe('Query Builder', () => {
     let context = new TestContext(connectionString);
     it('Test simple select', () => {
         let query = context.testModel.select();
@@ -86,7 +86,7 @@ describe('Query Builder', () => {
     context.dispose();
 });
 
-describe('Query Execute', () => {
+xdescribe('Query Execute', () => {
     const context = new TestContext(connectionString);
     let query = context.testModel.select();
     it('Test Query Execution', (done) => {
@@ -121,7 +121,7 @@ describe('Query Execute', () => {
     }, 120000);
 });
 
-describe('Create Entity', () => {
+xdescribe('Create Entity', () => {
     const context = new TestContext(connectionString);
     let obj = context.testModel.create();
     it('Test entity object creation', () => {
@@ -194,7 +194,4 @@ describe('Create Entity', () => {
             });
     }, 120000);
 })
-
-
-
 

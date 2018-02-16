@@ -9,7 +9,7 @@ export class TestObject {
 }
 
 describe('Test Function Parser', () => {
-    const parser = new FunctionParser<TestObject, any>((item, binds) => { item.fieldA === binds.bindA }).parse();
+    const parser = new FunctionParser<TestObject, any>((item, binds) => { return item.fieldA === binds.bindA }).parse();
     it('Test Parser Creation', () => {
         expect(parser).toBeDefined();
     });

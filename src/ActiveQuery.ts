@@ -40,7 +40,7 @@ export class ActiveQuery<T> implements IActiveQuery<T> {
      * @param clause Where clause to be added;
      */
     where<B>(clause: (item: T, binds: B) => boolean, bindObj?: B): IActiveQuery<T> {
-        this.sqlGen.addWhere(new WhereParser(clause, this.entity).sql);
+        this.sqlGen.addWhere(new WhereParser(clause, bindObj, this.entity));
         return this;
     }
     /**

@@ -12,6 +12,12 @@ export class Collection<T> {
         return obj;
     }
 
+    addRange(objs: T[]): Collection<T> {
+        if (objs == null || objs.length === 0 || !(objs instanceof Array)) { return; }
+        this._collection = this._collection.concat(objs);
+        return this;
+    }
+
     clear(): Collection<T> {
         this._collection = new Array<T>(0);
         return this;

@@ -27,7 +27,7 @@ export class FunctionParser<T, R> {
         return this.func.toString();
     }
 
-    constructor(private func: (item: T, bind: R) => any) {
+    constructor(private func: (item: T, bind: R) => boolean) {
     }
 
     parse(): FunctionParser<T, R> {
@@ -60,7 +60,7 @@ export class FunctionParser<T, R> {
     private parseSql() {
         let _sql = this.function$.match(/\{.*\}/).map(item => item);
         if (_sql.length === 0) { return; }
-        _sql[0] = _sql[0].replace("{", "").replace("}", "").trim();
+        _sql[0] = _sql[0].replace(/\{\s*return\s*/i, "").replace(/;\s*}\s*/, "").trim();
         _sql[0] = this.substituteVariables(this._fields.fields, _sql[0], ":");
         _sql[0] = this.substituteVariables(this._fields.bindVariables, _sql[0], "@");
 

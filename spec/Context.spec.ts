@@ -51,7 +51,7 @@ xdescribe('Context Model Builder', () => {
     context.dispose();
 });
 
-xdescribe('Query Builder', () => {
+describe('Query Builder', () => {
     let context = new TestContext(connectionString);
     it('Test simple select', () => {
         let query = context.testModel.select();
@@ -59,34 +59,52 @@ xdescribe('Query Builder', () => {
 
         expect(sql).toBeDefined();
         expect(sql.length).toBeGreaterThan(0);
-        expect(sql.indexOf("select")).toEqual(0);
-        expect(sql).toContain("from");
+        expect(sql.indexOf("SELECT\n")).toEqual(0);
+        expect(sql).toContain("\FROM\n");
     });
 
     it('Test simple select of field subset', () => {
         let query = context.testModel.select();
         expect(query.sql).toBeDefined();
-        expect(query.sql).toContain("select");
-        expect(query.sql).toContain("from");
+        expect(query.sql).toContain("SELECT\n");
+        expect(query.sql).toContain("\FROM\n");
     });
 
     it(`Test where clause creation`, () => {
         let query = context.testModel.where(item => item.dbId === 3);
-        expect(query.sql.match(/where\s*\(id\s*=\s*3\)/)).toBeDefined();
+        expect(query.sql.match(/WHERE\s*\(id\s*=\s*3\)/)).toBeDefined();
     });
-    it(`Test multiple where`, () => {
+
+    it('Test where clause with binds', (done) => {
+        let query = context.testModel.where(
+            (item, binds) => item.dbId === binds.idField && item.dbId === 3 && item.name === binds.peter && 3===3,
+            { idField: 3, peter: "bryan" });
+
+        query.execute().toPromise()
+            .catch(data => {
+                done();
+            })
+            .catch(error => {
+                fail(new Error(error));
+                done();
+            })
+    });
+
+    xit(`Test multiple where`, () => {
         let query = context.testModel.where(item => item.dbId === 3 && item.name != "Peter");
-        expect(query.sql.match(/where\s*\(id\s*=\s*3\)\s*AND\s*\(\s*name\s*!=\s*'Peter'/)).toBeDefined();
+        expect(query.sql.match(/WHERE\s*\(id\s*=\s*3\)\s*AND\s*\(\s*name\s*!=\s*'Peter'/)).toBeDefined();
 
         let queryB = context.testModel.where(item => item.dbId === 3 || item.name === "Peter").where(item => item.name != "Roger");
     });
+
     it(`Test run time query binding`, () => {
         var query = context.dbSet("testModel", Object);
     });
+
     context.dispose();
 });
 
-xdescribe('Query Execute', () => {
+describe('Query Execute', () => {
     const context = new TestContext(connectionString);
     let query = context.testModel.select();
     it('Test Query Execution', (done) => {
@@ -119,9 +137,23 @@ xdescribe('Query Execute', () => {
                 done();
             });
     }, 120000);
+
+    it("Test Bind Where", () => {
+        let results1 = context.testModel.where(item => item.dbId === 7).execute();
+        expect(results1.count).toEqual(1);
+        expect(results1.toArray()[0].dbId).toEqual(7);
+        expect(results1.toArray()[0].name).toEqual("roger");
+
+        let results2 = context.testModel.where((item, bind) => item.dbId === bind.pullId, { pullId: 8}).execute();
+        expect(results2.count).toEqual(1);
+        expect(results2.toArray()[0].dbId).toEqual(8);
+        expect(results2.toArray()[0].name).toEqual("david");
+
+
+    });
 });
 
-xdescribe('Create Entity', () => {
+describe('Create Entity', () => {
     const context = new TestContext(connectionString);
     let obj = context.testModel.create();
     it('Test entity object creation', () => {
@@ -193,5 +225,9 @@ xdescribe('Create Entity', () => {
                 }
             });
     }, 120000);
+
+
 })
+
+
 

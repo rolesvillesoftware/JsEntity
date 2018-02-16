@@ -1,44 +1,54 @@
 import { FunctionParser } from "./FunctionParser";
 import { Entity } from "./Entity";
+import { primativeTypes, IBoundWhere } from "./SqlGenerator";
 
-export class WhereParser<T, R> {
+export class WhereParser<T, R> implements IBoundWhere  {
 
-    private get fields(): { fields: string[]; binds: string[] } {
-        return // new FunctionParser().getFields(this.func);
+    private parser: FunctionParser<T, R>;
+    private _sql: string;
+    private _binds: primativeTypes[];
+
+    get statement(): string {
+        return this._sql;
     }
 
-    get sql(): string {
-        let whereClause = this.func.toString();
-        whereClause = this.substituteFields(whereClause);
-        return whereClause;
+    get binds(): primativeTypes[] {
+        return this._binds;
+    }
+    constructor(private func: (item: T, bind: R) => boolean, private bind: R, private entity: Entity<T>) {
+        this.parser = new FunctionParser(func).parse();
+        this.buildSql();
+        this.buildBinds();
     }
 
-    constructor(private func: (item: T, bind: R) => boolean, private entity: Entity<T>) { }
+    private buildSql() {
+        var _sql = this.parser.sql;
 
-    substituteFields(func: string): string {
-        if (func == null || func.length === 0) { return ""; }
-
-        const fields = this.fields;
-        let whereClause = func.replace(/.*\{\s+return\s+/gi, " ").replace(/;\s*\}\s*/, " ").trim();
-
-        return this.substituteOperands(whereClause);
-    }
-
-    substituteOperands(clause: string): string {
-        let returnClause = clause;
-        const substitutes = [
-            {operand: "===", sql: "="},
-            {operand: "==", sql: "="},
-            {operand: "&&", sql: "AND"},
-            {operand: "\\|\\|", sql: "OR"},
-            {operand: '"', sql: "'"}
-        ];
-
-        substitutes.forEach(item => {
-            const regExp = new RegExp(item.operand, "g");
-            returnClause = returnClause.replace(regExp, item.sql);
+        this.entity.fields.forEach(item => {
+            _sql = _sql.replace(new RegExp(`\:${item.propertyName}\:`, "g"), item.fieldName);
         });
-        return returnClause;
+
+        this._sql = _sql;
+    }
+
+    private buildBinds() {
+        let re = /@\w+@/;
+
+        let _sql = "";
+        let _workSql = this._sql;
+        let _binds = new Array<primativeTypes>(0);
+
+        while (true) {
+            let match = re.exec(_workSql)
+            if (match == null || match.length === 0) { break; }
+
+            _sql += `${_workSql.substr(0, match.index)}?`;
+            _workSql = _workSql.substr(match.index + match[0].length);
+            const bindVar = match[0].replace(/@/g, "").trim();
+            _binds.push(this.bind[bindVar]);
+        }
+        _sql += _workSql;
+        this._sql = _sql.trim();
     }
 }
 

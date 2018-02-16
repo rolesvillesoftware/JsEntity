@@ -1,5 +1,6 @@
 import { Collection } from "./Collection";
 import { IFieldMap } from "./Entity";
+import { WhereParser } from "./WhereParser";
 
 export type sqlType = "select" | "update" | "insert" | "delete";
 
@@ -29,7 +30,7 @@ export class SqlGenerator {
                 return this.insertSql();
             case "update":
                 return this.updateSql();
-            }
+        }
     }
     get sqlObj(): any {
         const sqlObject = {
@@ -51,16 +52,29 @@ export class SqlGenerator {
             this._tables == null || this._tables.count === 0) { return ""; }
 
         const sql = new Array<string>(0);
-        sql.push(`${this.sqlType}`);
+        sql.push(`${this.sqlType.toUpperCase()}`);
         sql.push(`\t${this._fields.toArray().map(item => item.field.sql).join(",\n\t")}`);
-        sql.push(`from`);
+        sql.push(`FROM`);
         sql.push(`\t${this._tables.toArray().join("\n\t")}`);
 
         if (this._filters != null && this._filters.count > 0) {
             const whereClause = new Array<string>(0);
-            whereClause.push(`where\r\n`);
-            whereClause.push(`\t(${this._filters.toArray().join(")\r\nAND\t(")}`)
-            whereClause.push(")");
+            whereClause.push(`WHERE`);
+            let first = true;
+            this._filters.forEach(filter => {
+                whereClause.push("\n\t");
+                if (first) {
+                    first = false;
+                } else {
+                    whereClause.push("AND\t");
+                }
+
+                whereClause.push(`( ${filter.statement} )`)
+                if (filter.binds != null && filter.binds.length > 0) {
+                    this._binds.addRange(filter.binds);
+                }
+
+            });
             sql.push(whereClause.join(''));
         }
         return sql.join("\n");
@@ -102,11 +116,8 @@ export class SqlGenerator {
         this._tables.add(from);
         return this;
     }
-    addWhere(statement: string, binds?: primativeTypes[]): SqlGenerator {
-        this._filters.add({
-            statement: statement,
-            binds: binds
-        });
+    addWhere<T, R>(where: IBoundWhere): SqlGenerator {
+        this._filters.add(where);
         return this;
     }
     addBind(bindobj: {}): SqlGenerator {
@@ -127,11 +138,19 @@ export class SqlGenerator {
             });
 
         /** Set the primary keys */
+        const binds = new Array<primativeTypes>(0);
+        let sql = new Array<string>(0);
+
         fieldMap
             .filter(field => field.primaryKey)
             .forEach(field => {
-                this.addWhere(`${field.fieldName} = ?`, [ pojso[field.propertyName] ]);
+                sql.push(`${field.fieldName} = ?`);
+                binds.push(pojso[field.propertyName]);
             });
+        this.addWhere({
+            statement: sql.join(" AND "),
+            binds: binds
+        })
         return this;
     }
 }

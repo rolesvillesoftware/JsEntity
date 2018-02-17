@@ -134,15 +134,17 @@ export class Entity<T> implements IEntity {
 
     async insert<T>(pojso: T): Promise<T> {
         let sql = new SqlGenerator("insert");
-        sql.addFrom(this.qualifiedTable).addBind(this.buildInsertBind(pojso));
+        sql.addFrom(this.qualifiedTable)
+            .addBind(this.buildInsertBind(pojso));
         const results = await this.parentContext.Database.runQuery(sql);
 
         if (results != null && results.results.insertId != null) {
             const identityField = this.fields.find(item => item.identity);
             if (identityField != null) {
-                pojso[identityField.propertyName] = results.results.insertId;
+                const hostField = ObjectBuilder.getHostField(identityField.propertyName);
+                pojso[hostField] = results.results.insertId;
             }
-            ObjectBuilder.resetEntity(pojso);
+            pojso["proxy"].setSaved();
         }
 
         return pojso;
@@ -153,7 +155,7 @@ export class Entity<T> implements IEntity {
         sql.setForUpdate(this.qualifiedTable, pojso, this.fields);
         const results = await this.parentContext.Database.runQuery(sql);
 
-        ObjectBuilder.resetEntity(pojso);
+        pojso["proxy"].setSaved();
         return pojso;
     }
 }

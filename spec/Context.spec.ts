@@ -2,7 +2,7 @@ import * as jasmineReporters from "jasmine-reporters";
 import { Context, IConnectionString } from "../src/Context";
 import { ContextModel } from "../src/ContextModel";
 import { DbSet } from "../src/DbSet";
-import { entityFlags } from "../src/ObjectBuilder";
+import { ChangeProxy } from "../src/ChangeProxy";
 
 var connectionString: IConnectionString = {
     "host": "mysql.rolesvillesoftware.com",
@@ -32,7 +32,7 @@ export class TestContext extends Context {
     }
 }
 
-xdescribe('Context Model Builder', () => {
+describe('Context Model Builder', () => {
     let context = new TestContext(connectionString);
     it('Test Context Creation', () => {
         expect(context.entityDefinitions.length).toEqual(1);
@@ -77,7 +77,7 @@ describe('Query Builder', () => {
 
     it('Test where clause with binds', (done) => {
         let query = context.testModel.where(
-            (item, binds) => item.dbId === binds.idField && item.dbId === 3 && item.name === binds.peter && 3===3,
+            (item, binds) => item.dbId === binds.idField && item.dbId === 3 && item.name === binds.peter && 3 === 3,
             { idField: 3, peter: "bryan" });
 
         query.execute().toPromise()
@@ -90,7 +90,7 @@ describe('Query Builder', () => {
             })
     });
 
-    xit(`Test multiple where`, () => {
+    it(`Test multiple where`, () => {
         let query = context.testModel.where(item => item.dbId === 3 && item.name != "Peter");
         expect(query.sql.match(/WHERE\s*\(id\s*=\s*3\)\s*AND\s*\(\s*name\s*!=\s*'Peter'/)).toBeDefined();
 
@@ -114,15 +114,15 @@ describe('Query Execute', () => {
                 try {
                     expect(data.count).toBeGreaterThan(0);
                     data.forEach(element => {
-                        expect((element as any)[entityFlags.isProxy]).toBeTruthy();
-                        expect((element as any)[entityFlags.isDirty]).toBeFalsy();
+                        expect(element["proxy"] instanceof ChangeProxy).toBeTruthy();
+                        expect(element["proxy"].isDirty).toBeFalsy();
                     });
                     expect((context as any)["_attached"].count).toEqual(data.count);
 
                     /** test changing an element */
                     const tObj = data.get(0);
                     tObj.name = "new name";
-                    expect((tObj as any)[entityFlags.isDirty]).toBeTruthy();
+                    expect(tObj["proxy"].isDirty).toBeTruthy();
 
                     context.dispose();
                     expect((context as any)["_attached"].count).toEqual(0);
@@ -137,20 +137,75 @@ describe('Query Execute', () => {
                 done();
             });
     }, 120000);
+});
+describe("Test Where binding", () => {
+    const context = new TestContext(connectionString);
+    it("Test Bind Where - no binds", (done) => {
+        context.testModel.where(item => item.dbId === 7)
+            .execute()
+            .toPromise()
+            .then(results => {
+                expect(results.count).toEqual(1);
+                expect(results.toArray()[0].dbId).toEqual(7);
+                expect(results.toArray()[0].name).toEqual("roger");
+                done();
+            })
+            .catch(error => {
+                fail(new Error(error));
+                done();
+            })
+    }, 120000);
+    it("Test bind where - binds 1", (done) => {
+        context.testModel.where((item, bind) => item.dbId === bind.pullId, { pullId: 8 })
+            .execute()
+            .toPromise()
+            .then(results => {
+                expect(results.count).toEqual(1);
+                expect(results.toArray()[0].dbId).toEqual(8);
+                expect(results.toArray()[0].name).toEqual("david");
+                done();
+            })
+            .catch(error => {
+                fail(new Error(error));
+                done();
+            })
 
-    it("Test Bind Where", () => {
-        let results1 = context.testModel.where(item => item.dbId === 7).execute();
-        expect(results1.count).toEqual(1);
-        expect(results1.toArray()[0].dbId).toEqual(7);
-        expect(results1.toArray()[0].name).toEqual("roger");
+    }, 120000);
 
-        let results2 = context.testModel.where((item, bind) => item.dbId === bind.pullId, { pullId: 8}).execute();
-        expect(results2.count).toEqual(1);
-        expect(results2.toArray()[0].dbId).toEqual(8);
-        expect(results2.toArray()[0].name).toEqual("david");
+    it("Test bind where - binds 2 - multiple binds ", (done) => {
+        context.testModel.where((item, bind) => item.dbId === bind.pullId && item.name === bind.nameFilter, { pullId: 8, nameFilter: "david" })
+            .execute()
+            .toPromise()
+            .then(results => {
+                expect(results.count).toEqual(1);
+                expect(results.toArray()[0].dbId).toEqual(8);
+                expect(results.toArray()[0].name).toEqual("david");
+                done();
+            })
+            .catch(error => {
+                fail(new Error(error));
+                done();
+            })
 
+    }, 120000);
 
-    });
+    it("Test bind where - binds 2 - multiple binds sane value ", (done) => {
+        context.testModel.where((item, bind) => item.dbId === bind.pullId && item.dbId === bind.pullId, { pullId: 8, nameFilter: "david" })
+            .execute()
+            .toPromise()
+            .then(results => {
+                expect(results.count).toEqual(1);
+                expect(results.toArray()[0].dbId).toEqual(8);
+                expect(results.toArray()[0].name).toEqual("david");
+                done();
+            })
+            .catch(error => {
+                fail(new Error(error));
+                done();
+            })
+
+    }, 120000);
+
 });
 
 describe('Create Entity', () => {
@@ -158,20 +213,20 @@ describe('Create Entity', () => {
     let obj = context.testModel.create();
     it('Test entity object creation', () => {
         expect(obj).toBeDefined();
-        expect(obj[entityFlags.isUpdate]).toBeFalsy();
-        expect(obj[entityFlags.isDirty]).toBeFalsy();
+        expect(obj["proxy"].state).toEqual("unmodified");
+        expect(obj["proxy"].isDirty).toBeFalsy();
         expect((context as any)["_attached"].count).toEqual(1);
     });
 
     it('Test adding values', () => {
         obj.name = "Test Name 1";
+        expect(obj["proxy"].state).toEqual("add");
         expect(obj.name).toBeDefined();
         expect(obj.name).toEqual("Test Name 1");
-        expect(obj[entityFlags.isDirty]).toBeTruthy();
-        expect(obj[entityFlags.isUpdate]).toBeFalsy();
+        expect(obj["proxy"].isDirty).toBeTruthy();
 
         obj.date = new Date();
-        expect(obj[entityFlags.isDirty]).toBeTruthy();
+        expect(obj["proxy"].isDirty).toBeTruthy();
         expect((context as any)["_attached"].count).toEqual(1);
     });
 
@@ -186,10 +241,11 @@ describe('Create Entity', () => {
                     expect(obj.dbId).toBeDefined();
                     expect(obj.dbId).toBeGreaterThan(-1);
 
-                    expect(obj[entityFlags.isDirty]).toBeFalsy();
-                    expect(obj[entityFlags.isUpdate]).toBeTruthy();
+                    expect(obj["proxy"].isDirty).toBeFalsy();
+                    expect(obj["proxy"].state).toEqual("unmodified");
                 } catch (ex) {
                     fail(ex);
+                    done();
                 } finally {
                     done();
                 }
@@ -206,7 +262,7 @@ describe('Create Entity', () => {
         expect(obj.name).toEqual("Test Name 1");
         obj.name = "New Object Name";
         const origId = obj.dbId;
-        expect(obj[entityFlags.isDirty]).toBeTruthy();
+        expect(obj["proxy"].isDirty).toBeTruthy();
         context.saveChanges()
             .catch(error => {
                 fail(error);
@@ -216,16 +272,16 @@ describe('Create Entity', () => {
                 try {
                     expect(obj.name).toEqual("New Object Name");
                     expect(obj.dbId).toEqual(origId);
-                    expect(obj[entityFlags.isDirty]).toBeFalsy();
-                    expect(obj[entityFlags.isUpdate]).toBeTruthy();
+                    expect(obj["proxy"].isDirty).toBeFalsy();
+                    expect(obj["proxy"].state).toEqual("unmodified");
                 } catch (ex) {
                     fail(ex);
+                    done();
                 } finally {
                     done();
                 }
             });
     }, 120000);
-
 
 })
 

@@ -60,9 +60,9 @@ export class ActiveQuery<T> implements IActiveQuery<T> {
                     else {
                         const collection = new Collection<T>();
                         data.results.forEach(element => {
-                            const obj: T = ObjectBuilder.createObject(this.entity.pojso, element, this.entity, false);
-                            collection.add(obj);
-                            this.context.attach(obj);
+                            const proxy = ObjectBuilder.createObject(this.entity.pojso, element, this.entity, false);
+                            collection.add(proxy.obj);
+                            this.context.attach(proxy);
                         });
                         observer.next(collection);
                     }

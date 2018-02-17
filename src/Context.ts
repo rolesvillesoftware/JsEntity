@@ -4,14 +4,11 @@ import { IEntity, } from "./Entity";
 import { DbSet } from "./DbSet";
 import { MySqlConnection, IConnectionString } from "./MySqlConnection";
 import { Collection } from "./Collection";
-import { ObjectBuilder, entityFlags } from "./ObjectBuilder";
+import { ObjectBuilder } from "./ObjectBuilder";
+import { ChangeProxy } from "./ChangeProxy";
 
 export { IConnectionString, IQueryResult } from "./MySqlConnection";
 
-export interface IAttachedObject {
-    _$$isDirty$$: boolean;
-    _$$proxy$$: boolean;
-}
 /**
  * Main context class - Controls the entity framework class
  *
@@ -22,7 +19,7 @@ export abstract class Context {
     private _contextModel: ContextModel = null;
     private _dbConnection: MySqlConnection;
 
-    private _attached = new Collection<{}>();
+    private _attached = new Collection<ChangeProxy<any>>();
 
     get Database(): MySqlConnection {
         return this._dbConnection;
@@ -58,28 +55,40 @@ export abstract class Context {
         return new DbSet<T>(pojso, entity, this);
     }
 
-    attach<T>(obj: T): T {
-        if (obj["_$$proxy$$"] == null) {
+    attach<T>(proxy: ChangeProxy<T>): T {
+        if (!(proxy instanceof ChangeProxy)) {
             throw new Error("Object not context proxy");
         } else {
-            this._attached.add(obj);
-            return obj;
+            this._attached.add(proxy);
+            return proxy.obj;
         }
     }
 
-    async saveChanges(): Promise<any> {
+    async saveChanges(): Promise<boolean | string> {
         if (this._attached == null || this._attached.count === 0) { return; }
-           const dirty = this._attached.filter(item => item[entityFlags.isDirty]);
-           if (dirty != null) {
-               for (const obj of dirty) {
-                    if (obj[entityFlags.isUpdate]) {
-                        await obj[entityFlags.entity].update(obj);
-                    } else {
-                        await obj[entityFlags.entity].insert(obj);
+        const dirty = this._attached.filter(item => item.isDirty);
+
+        try {
+            if (dirty != null) {
+                for (const proxy of dirty) {
+                    switch (proxy.state) {
+                        case "modified":
+                            await proxy.entity.update(proxy.obj);
+                            break;
+                        case "add":
+                            await proxy.entity.insert(proxy.obj);
+                            break;
+                        case "delete":
+                            throw new Error("Delete not supported yet");
                     }
-               }
-           }
+                }
+            }
+            return true;
+        } catch (error) {
+            return error;
+        }
     }
+
     dispose() {
         this._dbConnection.dispose();
         this._attached.clear();

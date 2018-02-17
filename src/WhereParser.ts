@@ -48,6 +48,7 @@ export class WhereParser<T, R> implements IBoundWhere  {
             _binds.push(this.bind[bindVar]);
         }
         _sql += _workSql;
+        this._binds = _binds;
         this._sql = _sql.trim();
     }
 }

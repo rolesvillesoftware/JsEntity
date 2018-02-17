@@ -1,15 +1,12 @@
 import * as jasmineReporters from "jasmine-reporters";
-import { Context, IConnectionString } from "../src/Context";
+import { Context } from "../src/Context";
+import { Connection } from "../src/Connection";
 import { ContextModel } from "../src/ContextModel";
 import { DbSet } from "../src/DbSet";
 import { ChangeProxy } from "../src/ChangeProxy";
 
-var connectionString: IConnectionString = {
-    "host": "mysql.rolesvillesoftware.com",
-    "user": "tiber",
-    "password": "Tiber$45",
-    "database": "TiberDM"
-};
+const _connectionString = "provider=mysql;host=mysql.rolesvillesoftware.com;user=tiber;password=Tiber$45;database=TiberDM"
+const connection = new Connection(_connectionString);
 
 export class TestModel {
     dbId: number;
@@ -33,7 +30,7 @@ export class TestContext extends Context {
 }
 
 describe('Context Model Builder', () => {
-    let context = new TestContext(connectionString);
+    let context = new TestContext(connection);
     it('Test Context Creation', () => {
         expect(context.entityDefinitions.length).toEqual(1);
         expect(context.testModel).toBeDefined();
@@ -52,7 +49,7 @@ describe('Context Model Builder', () => {
 });
 
 describe('Query Builder', () => {
-    let context = new TestContext(connectionString);
+    let context = new TestContext(connection);
     it('Test simple select', () => {
         let query = context.testModel.select();
         let sql = query.sql;
@@ -105,7 +102,7 @@ describe('Query Builder', () => {
 });
 
 describe('Query Execute', () => {
-    const context = new TestContext(connectionString);
+    const context = new TestContext(connection);
     let query = context.testModel.select();
     it('Test Query Execution', (done) => {
         query.execute()
@@ -139,7 +136,7 @@ describe('Query Execute', () => {
     }, 120000);
 });
 describe("Test Where binding", () => {
-    const context = new TestContext(connectionString);
+    const context = new TestContext(connection);
     it("Test Bind Where - no binds", (done) => {
         context.testModel.where(item => item.dbId === 7)
             .execute()
@@ -209,7 +206,7 @@ describe("Test Where binding", () => {
 });
 
 describe('Create Entity', () => {
-    const context = new TestContext(connectionString);
+    const context = new TestContext(connection);
     let obj = context.testModel.create();
     it('Test entity object creation', () => {
         expect(obj).toBeDefined();

@@ -1,8 +1,9 @@
 import { FunctionParser } from "./FunctionParser";
 import { Entity } from "./Entity";
 import { primativeTypes, IBoundWhere } from "./SqlGenerator";
+import { Context } from "./Context";
 
-export class WhereParser<T, R> implements IBoundWhere  {
+export class WhereParser<T, R, CTX extends Context<CTX>> implements IBoundWhere  {
 
     private parser: FunctionParser<T, R>;
     private _sql: string;
@@ -15,7 +16,7 @@ export class WhereParser<T, R> implements IBoundWhere  {
     get binds(): primativeTypes[] {
         return this._binds;
     }
-    constructor(private func: (item: T, bind: R) => boolean, private bind: R, private entity: Entity<T>) {
+    constructor(private func: (item: T, bind: R) => boolean, private bind: R, private entity: Entity<T, CTX>) {
         this.parser = new FunctionParser(func).parse();
         this.buildSql();
         this.buildBinds();

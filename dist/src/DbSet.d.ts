@@ -1,12 +1,14 @@
 import { Entity } from "./Entity";
 import { IBaseQuery, IActiveQuery } from "./IBaseQuery";
 import { Context } from "./Context";
-export declare class DbSet<T> implements IBaseQuery<T> {
+import { Collection } from "./Collection";
+export declare class DbSet<T, CTX extends Context<CTX>> implements IBaseQuery<T> {
     private pojso;
-    entity: Entity<T>;
+    entity: Entity<T, CTX>;
     private context;
-    constructor(pojso: new () => T, entity: Entity<T>, context: Context);
+    constructor(pojso: new () => T, entity: Entity<T, CTX>, context: Context<CTX>);
     select(fields?: string | string[]): IActiveQuery<T>;
     where<B>(clause: (item: T, binds: B) => boolean, bindObj?: B): IActiveQuery<T>;
-    create(): T;
+    create<B>(bindObj?: B): T;
+    selectOrCreate(clause: (item: T, binds: T) => boolean, bindObj?: T): Promise<Collection<T>>;
 }

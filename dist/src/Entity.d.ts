@@ -18,7 +18,7 @@ export declare class FieldMap implements IFieldMap {
     identity: boolean;
     readonly sql: string;
 }
-export declare class Entity<T> implements IEntity {
+export declare class Entity<T, CTX extends Context<CTX>> implements IEntity {
     private parentContext;
     entityName: string;
     pojso: new () => T;
@@ -28,10 +28,10 @@ export declare class Entity<T> implements IEntity {
     tableName: string;
     schema: string;
     readonly qualifiedTable: string;
-    constructor(parentContext: Context, entityName: string, pojso: new () => T, tableName?: string, schema?: string);
+    constructor(parentContext: Context<CTX>, entityName: string, pojso: new () => T, tableName?: string, schema?: string);
     private validateMap(map);
-    map(maps: {}): Entity<T>;
-    defineKey<R>(keys: string | string[]): Entity<T>;
+    map(maps: {}): Entity<T, CTX>;
+    defineKey<R>(keys: string | string[]): Entity<T, CTX>;
     private buildInsertBind(pojso);
     insert<T>(pojso: T): Promise<T>;
     update<T>(pojso: T): Promise<T>;

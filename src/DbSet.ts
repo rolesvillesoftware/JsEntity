@@ -4,10 +4,11 @@ import { ActiveQuery } from "./ActiveQuery";
 import { WhereParser } from "./WhereParser";
 import { Context } from "./Context";
 import { ObjectBuilder } from "./ObjectBuilder";
+import { Collection } from "./Collection";
 
-export class DbSet<T> implements IBaseQuery<T> {
+export class DbSet<T, CTX extends Context<CTX>> implements IBaseQuery<T> {
 
-    constructor(private pojso: new () => T, public entity: Entity<T>, private context: Context) { }
+    constructor(private pojso: new () => T, public entity: Entity<T, CTX>, private context: Context<CTX>) { }
 
     select(fields?: string | string[]): IActiveQuery<T> {
         return new ActiveQuery(this.pojso, this.entity, this.context).select(fields);
@@ -17,11 +18,21 @@ export class DbSet<T> implements IBaseQuery<T> {
         return new ActiveQuery(this.pojso, this.entity, this.context).select().where(clause, bindObj);
     }
 
-    create(): T {
+    create<B>(bindObj?: B): T {
         const source = {};
         this.entity.fields.forEach(field => {
-            source[field.propertyName] = null;
+            source[field.propertyName] = (bindObj || {})[field.propertyName] || null;
         });
         return this.context.attach(ObjectBuilder.createObject(this.pojso, source, this.entity, true));
+    }
+
+    async selectOrCreate(clause: (item: T, binds: T) => boolean, bindObj?: T): Promise<Collection<T>> {
+        const query = this.where(clause, bindObj);
+        var results = await query.execute().toPromise();
+
+        if (results == null || results.count === 0) {
+            return new Collection<T>().addRange( [ this.create(bindObj) ]);
+        }
+        return results;
     }
 }

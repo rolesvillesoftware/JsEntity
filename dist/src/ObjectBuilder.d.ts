@@ -1,9 +1,10 @@
 import { IFieldMap, Entity } from "./Entity";
 import { ChangeProxy } from "./ChangeProxy";
+import { Context } from "./Context";
 export declare class ObjectBuilder {
-    static createObject<R>(pojso: new () => R, queryResults: {}, entity: Entity<R>, create?: boolean): ChangeProxy<R>;
-    static proxyObject<R>(dest: R, source: {}, entity: Entity<R>, create?: boolean): ChangeProxy<R>;
-    static rebuildKeys<R>(dest: R, entity: Entity<R>): void;
+    static createObject<R, CTX extends Context<CTX>>(pojso: new () => R, queryResults: {}, entity: Entity<R, CTX>, create?: boolean): ChangeProxy<R, CTX>;
+    static proxyObject<R, CTX extends Context<CTX>>(dest: R, source: {}, entity: Entity<R, CTX>, create?: boolean): ChangeProxy<R, CTX>;
+    static rebuildKeys<R, CTX extends Context<CTX>>(dest: R, entity: Entity<R, CTX>): void;
     static isProxy<R>(dest: R): boolean;
     static buildKey<R>(dest: R, source: {}, field: IFieldMap, create?: boolean): void;
     static defineKeyProperties<R>(dest: R, hostField: string, field: IFieldMap, create: boolean): void;

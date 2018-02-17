@@ -4,6 +4,7 @@ import { Connection } from "../src/Connection";
 import { ContextModel } from "../src/ContextModel";
 import { DbSet } from "../src/DbSet";
 import { ChangeProxy } from "../src/ChangeProxy";
+import { Collection } from "../src/Collection";
 
 const _connectionString = "provider=mysql;host=mysql.rolesvillesoftware.com;user=tiber;password=Tiber$45;database=TiberDM"
 const connection = new Connection(_connectionString);
@@ -14,11 +15,11 @@ export class TestModel {
     date: Date;
 }
 
-export class TestContext extends Context {
+export class TestContext extends Context<TestContext> {
 
-    testModel: DbSet<TestModel>;
+    testModel: DbSet<TestModel, TestContext>;
 
-    protected modelBuilder(model: ContextModel): void {
+    protected modelBuilder(model: ContextModel<TestContext>): void {
         let entity = model
             .add("testModel", TestModel, "TestModel", "JsEntityTest")
             .map({
@@ -282,5 +283,54 @@ describe('Create Entity', () => {
 
 })
 
+describe("Test Select or Create", () => {
+
+    it("Simple Test - found record", (itDone) => {
+        const context = new TestContext(connection);
+        context.runThenDispose((c, d) => {
+            c.testModel
+                .selectOrCreate((item, bind) => item.name === bind.name, { name: "roger" } as TestModel)
+                .catch(error => {
+                    fail(new Error(error));
+                    d();
+                    itDone();
+                })
+                .then((data: Collection<TestModel>) => {
+                    expect(data).toBeDefined();
+                    expect(data.count).toEqual(1);
+                    expect(data.toArray()[0].dbId).toEqual(7)
+                    d();
+                    itDone();
+                });
+        });
+    });
+
+    it("Simple Test - Not found record", (itDone) => {
+        const context = new TestContext(connection);
+        context.runThenDispose((c, d) => {
+            c.testModel
+                .selectOrCreate((item, bind) => item.name === bind.name, { name: "peterpan" } as TestModel)
+                .catch(error => {
+                    fail(new Error(error));
+                    d();
+                    itDone();
+                })
+                .then((data: Collection<TestModel>) => {
+                    try {
+                        expect(data).toBeDefined();
+                        expect(data.count).toEqual(1);
+                        expect(data.toArray()[0].dbId).toEqual(null);
+                        expect(data.toArray()[0].name).toEqual("peterpan");
+                    } catch (error) {
+                        fail(new Error(error));
+                    } finally {
+                        d();
+                        itDone();
+                    }
+                });
+        });
+    }, 300000);
+
+});
 
 

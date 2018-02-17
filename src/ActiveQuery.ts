@@ -8,7 +8,7 @@ import { Collection } from "./Collection";
 import { Observable } from "rxjs";
 import { ObjectBuilder } from "./ObjectBuilder";
 
-export class ActiveQuery<T> implements IActiveQuery<T> {
+export class ActiveQuery<T, CTX extends Context<CTX>> implements IActiveQuery<T> {
 
     private sqlGen: SqlGenerator;
     private bindIndex = 0;
@@ -17,7 +17,7 @@ export class ActiveQuery<T> implements IActiveQuery<T> {
         return this.sqlGen.sql;
     }
 
-    constructor(private pojso: new () => T, private entity: Entity<T>, private context: Context) {
+    constructor(private pojso: new () => T, private entity: Entity<T, CTX>, private context: Context<CTX>) {
         this.sqlGen = new SqlGenerator("select");
         this.sqlGen.addFrom(entity.qualifiedTable)
     }

@@ -1,24 +1,23 @@
 import { IFieldMap, Entity } from "./Entity";
 import { ChangeProxy } from "./ChangeProxy";
+import { Context } from "./Context";
 
 export class ObjectBuilder {
-    static createObject<R>(pojso: new () => R, queryResults: {}, entity: Entity<R>, create?: boolean): ChangeProxy<R> {
+    static createObject<R, CTX extends Context<CTX>>(pojso: new () => R, queryResults: {}, entity: Entity<R, CTX>, create?: boolean): ChangeProxy<R, CTX> {
         const returnObj = new pojso();
         return ObjectBuilder.proxyObject(returnObj, queryResults, entity, create);
     }
 
-    static proxyObject<R>(dest: R, source: {}, entity: Entity<R>, create?: boolean): ChangeProxy<R> {
-        const proxy = new ChangeProxy<R>(entity, dest, create);
+    static proxyObject<R, CTX extends Context<CTX>>(dest: R, source: {}, entity: Entity<R, CTX>, create?: boolean): ChangeProxy<R, CTX> {
+        const proxy = new ChangeProxy<R, CTX>(entity, dest, create);
         dest["proxy"] = proxy;
 
-        Object.keys(source).forEach(key => {
-            const field = entity.fields.find(item => item.propertyName === key);
-            if (field == null) { return; }
+        entity.fields.forEach(field => {
             ObjectBuilder.buildKey(dest, source, field, create);
         });
         return proxy;
     }
-    static rebuildKeys<R>(dest: R, entity: Entity<R>) {
+    static rebuildKeys<R, CTX extends Context<CTX>>(dest: R, entity: Entity<R, CTX>) {
         const fields = entity.fields.filter(field => field.primaryKey);
         fields.forEach(field => {
             if (dest.hasOwnProperty(field.propertyName)) {

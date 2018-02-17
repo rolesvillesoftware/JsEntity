@@ -15,11 +15,11 @@ export { IConnectionString, IQueryResult } from "./MySqlConnection";
  * @export
  * @class Context
  */
-export abstract class Context {
-    private _contextModel: ContextModel = null;
+export abstract class Context<X extends Context<X>> {
+    private _contextModel: ContextModel<X> = null;
     private _dbConnection: MySqlConnection;
 
-    private _attached = new Collection<ChangeProxy<any>>();
+    private _attached = new Collection<ChangeProxy<any, X>>();
 
     get Database(): MySqlConnection {
         return this._dbConnection;
@@ -47,15 +47,15 @@ export abstract class Context {
      * @abstract
      * @param model
      */
-    protected abstract modelBuilder(model: ContextModel): void;
+    protected abstract modelBuilder(model: ContextModel<X>): void;
 
-    dbSet<T>(entityName: string, pojso: new () => T): DbSet<T> {
+    dbSet<T>(entityName: string, pojso: new () => T): DbSet<T, X> {
         const entity = this._contextModel.entities[entityName];
         if (entity == null) { throw new Error(`Entity ${entity} not defined`); }
-        return new DbSet<T>(pojso, entity, this);
+        return new DbSet<T, X>(pojso, entity, this);
     }
 
-    attach<T>(proxy: ChangeProxy<T>): T {
+    attach<T>(proxy: ChangeProxy<T, X>): T {
         if (!(proxy instanceof ChangeProxy)) {
             throw new Error("Object not context proxy");
         } else {
@@ -89,9 +89,9 @@ export abstract class Context {
         }
     }
 
-    runThenDispose(routine: (context, done: () => void) => void) {
+    runThenDispose(routine: (context: X, done: () => void) => void) {
         let done = () => { this.dispose(); }
-        routine(this, done);
+        routine(<X>(this as any), done);
     }
 
     private _disposed = false;

@@ -6,7 +6,7 @@ export declare class TestModel {
     name: string;
     date: Date;
 }
-export declare class TestContext extends Context {
-    testModel: DbSet<TestModel>;
-    protected modelBuilder(model: ContextModel): void;
+export declare class TestContext extends Context<TestContext> {
+    testModel: DbSet<TestModel, TestContext>;
+    protected modelBuilder(model: ContextModel<TestContext>): void;
 }

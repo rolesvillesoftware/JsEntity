@@ -31,7 +31,7 @@ export class FieldMap implements IFieldMap {
 /**
  * Entity model
  */
-export class Entity<T> implements IEntity {
+export class Entity<T, CTX extends Context<CTX>> implements IEntity {
 
     private _fieldMap: {} = {};
     private _fields: IFieldMap[] = new Array<IFieldMap>(0);
@@ -49,7 +49,7 @@ export class Entity<T> implements IEntity {
         tableName.push(this.tableName)
         return tableName.join(".");
     }
-    constructor(private parentContext: Context, public entityName: string, public pojso: new () => T, tableName?: string, schema?: string) {
+    constructor(private parentContext: Context<CTX>, public entityName: string, public pojso: new () => T, tableName?: string, schema?: string) {
         this.tableName = tableName || entityName;
         this.schema = schema;
 
@@ -69,7 +69,7 @@ export class Entity<T> implements IEntity {
      * Create the mapping of the fields to POJSO
      * @param maps Object containing the map definition
      */
-    map(maps: {}): Entity<T> {
+    map(maps: {}): Entity<T, CTX> {
         this._fieldMap = Object.assign(this._fieldMap, maps);
         this._fields = new Array<IFieldMap>(0);
 
@@ -95,7 +95,7 @@ export class Entity<T> implements IEntity {
      *
      * @param keys {string | string[]} The field or fields to identify the primary key
      */
-    defineKey<R>(keys: string | string[]): Entity<T> {
+    defineKey<R>(keys: string | string[]): Entity<T, CTX> {
         this.fields.filter(item => item.primaryKey).forEach(item => item.primaryKey = false);
         let workKeys = new Array<string>(0);
         if (typeof (keys) === "string") {

@@ -11,3 +11,4 @@ gruntfile.js
 *.ts
 *.js.map
 !*.d.ts
+dist/spec/*.d.ts

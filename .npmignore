@@ -1,7 +1,8 @@
 dist/spec/
-.vscode/
+spec/
 src/
 tscache/
+.vscode/
 dist/*.js.map
 *.tgz
 package-lock.json
@@ -9,3 +10,4 @@ tsconfig.json
 gruntfile.js
 *.ts
 *.js.map
+!dist/**/*.d.ts

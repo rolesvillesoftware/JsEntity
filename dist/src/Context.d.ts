@@ -16,5 +16,8 @@ export declare abstract class Context {
     dbSet<T>(entityName: string, pojso: new () => T): DbSet<T>;
     attach<T>(proxy: ChangeProxy<T>): T;
     saveChanges(): Promise<boolean | string>;
+    runThenDispose(routine: (context, done: () => void) => void): void;
+    private _disposed;
+    private _disposing;
     dispose(): void;
 }

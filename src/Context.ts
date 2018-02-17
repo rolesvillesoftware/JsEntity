@@ -89,8 +89,22 @@ export abstract class Context {
         }
     }
 
+    runThenDispose(routine: (context, done: () => void) => void) {
+        let done = () => { this.dispose(); }
+        routine(this, done);
+        done();
+    }
+
+    private _disposed = false;
+    private _disposing = false;
     dispose() {
-        this._dbConnection.dispose();
-        this._attached.clear();
+        if (this._disposed) { return; }
+        if (!this._disposing) {
+            this._disposing = true;
+            this._dbConnection.dispose();
+            this._attached.clear();
+            this._disposed = true;
+            this._disposing = false;
+        }
     }
 }

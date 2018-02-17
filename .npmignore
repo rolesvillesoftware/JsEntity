@@ -10,3 +10,4 @@ tsconfig.json
 gruntfile.js
 *.ts
 *.js.map
+!*.d.ts

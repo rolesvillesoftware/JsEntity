@@ -2,5 +2,4 @@ node_modules
 **/*.js
 !spec/helpers/*.js
 **/*.js.map
-**/*.d.ts
 spec/results/*

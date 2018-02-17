@@ -1,4 +1,4 @@
-dist/spec/
+dist/spec/*
 spec/
 src/
 tscache/
@@ -10,4 +10,3 @@ tsconfig.json
 gruntfile.js
 *.ts
 *.js.map
-!dist/**/*.d.ts

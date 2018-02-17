@@ -92,7 +92,6 @@ export abstract class Context {
     runThenDispose(routine: (context, done: () => void) => void) {
         let done = () => { this.dispose(); }
         routine(this, done);
-        done();
     }
 
     private _disposed = false;

@@ -29,7 +29,7 @@ export class ObjectBuilder {
         return dest["proxy"] != null && dest["proxy"] instanceof ChangeProxy;
     }
     static buildKey<R>(dest: R, source: {}, field: IFieldMap, create?: boolean) {
-        const hostField = ObjectBuilder.setKeyFlags(dest, source, field.propertyName);
+        const hostField = ObjectBuilder.setKeyFlags(dest, source, field.propertyName, field, create);
         ObjectBuilder.defineKeyProperties(dest, hostField, field, create);
     }
     static defineKeyProperties<R>(dest: R, hostField: string, field: IFieldMap, create: boolean) {
@@ -41,11 +41,11 @@ export class ObjectBuilder {
         })`;
         eval(defineString);
     }
-    static setKeyFlags<R>(dest: R, source: {}, key: string): string {
+    static setKeyFlags<R>(dest: R, source: {}, key: string, field: IFieldMap, create?: boolean): string {
         if (!ObjectBuilder.isProxy(dest)) { return; }
 
         const hostField = ObjectBuilder.getHostField(key);
-        dest[hostField] = source[key];
+        dest[hostField] = create && field.identity ? null : source[key];
 
         return hostField;
     }

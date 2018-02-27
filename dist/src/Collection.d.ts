@@ -1,9 +1,12 @@
 export declare class Collection<T> {
+    private uniqueItems;
     private _collection;
+    readonly uniqueCollection: boolean;
     readonly count: number;
     readonly isSingle: boolean;
     readonly isEmpty: boolean;
     readonly hasElements: boolean;
+    constructor(uniqueItems?: boolean);
     add(obj: T): T;
     addRange(objs: T[]): Collection<T>;
     clear(): Collection<T>;

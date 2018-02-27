@@ -20,10 +20,14 @@ export class DbSet<T, CTX extends Context<CTX>> implements IBaseQuery<T> {
 
     create<B>(bindObj?: B): T {
         const source = {};
+        let isDirty = false;
         this.entity.fields.forEach(field => {
             source[field.propertyName] = (bindObj || {})[field.propertyName] || null;
+            if (source[field.propertyName] != null) { isDirty = true; }
         });
-        return this.context.attach(ObjectBuilder.createObject(this.pojso, source, this.entity, true));
+        const obj = ObjectBuilder.createObject(this.pojso, source, this.entity, true);
+        if (isDirty) { obj.setDirty(); }
+        return this.context.attach(obj);
     }
 
     async selectOrCreate(clause: (item: T, binds: T) => boolean, bindObj?: T): Promise<Collection<T>> {

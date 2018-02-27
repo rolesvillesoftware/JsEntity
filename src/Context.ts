@@ -86,7 +86,9 @@ export abstract class Context<X extends Context<X>> {
           case "delete":
             throw new Error("Delete not supported yet");
         }
-        if (result != null && result.isError) { throw new Error(result.error); }
+        if (result != null && result.isError) {
+          throw new Error(result.error);
+        }
       }
     }
     return true;

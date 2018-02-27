@@ -3,6 +3,7 @@ import { FunctionParser } from "./FunctionParser";
 import { SqlGenerator } from "./SqlGenerator";
 import { Context } from "./Context";
 import { ObjectBuilder } from "./ObjectBuilder";
+import { SafePromise } from "@rolesvillesoftware/tools/dist";
 
 export interface IEntity {
     entityName: string;
@@ -136,13 +137,15 @@ export class Entity<T, CTX extends Context<CTX>> implements IEntity {
         let sql = new SqlGenerator("insert");
         sql.addFrom(this.qualifiedTable)
             .addBind(this.buildInsertBind(pojso));
-        const results = await this.parentContext.Database.runQuery(sql);
+        const results = await SafePromise.run(() => this.parentContext.Database.runQuery(sql));
+        if (results.isError) { throw new Error(results.error); }
+        const result = results.value;
 
-        if (results != null && results.results.insertId != null) {
+        if (result != null && result.results.insertId != null) {
             const identityField = this.fields.find(item => item.identity);
             if (identityField != null) {
                 const hostField = ObjectBuilder.getHostField(identityField.propertyName);
-                pojso[hostField] = results.results.insertId;
+                pojso[hostField] = result.results.insertId;
             }
             pojso["proxy"].setSaved();
         }
@@ -153,7 +156,8 @@ export class Entity<T, CTX extends Context<CTX>> implements IEntity {
     async update<T>(pojso: T): Promise<T> {
         let sql = new SqlGenerator("update");
         sql.setForUpdate(this.qualifiedTable, pojso, this.fields);
-        const results = await this.parentContext.Database.runQuery(sql);
+        const result = await SafePromise.run(() => this.parentContext.Database.runQuery(sql));
+        if (result.isError) { throw new Error(result.error); }
 
         pojso["proxy"].setSaved();
         return pojso;

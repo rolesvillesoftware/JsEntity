@@ -15,7 +15,7 @@ export declare abstract class Context<X extends Context<X>> {
     protected abstract modelBuilder(model: ContextModel<X>): void;
     dbSet<T>(entityName: string, pojso: new () => T): DbSet<T, X>;
     attach<T>(proxy: ChangeProxy<T, X>): T;
-    saveChanges(): Promise<boolean | string>;
+    saveChanges(): Promise<boolean>;
     runThenDispose(routine: (context: X, done: () => void) => void): void;
     private _disposed;
     private _disposing;

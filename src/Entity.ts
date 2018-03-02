@@ -16,6 +16,9 @@ export interface IFieldMap {
     fieldName: string;
     primaryKey: boolean;
     identity: boolean;
+    fieldType: "string" | "number" | "date";
+    bindValue(value: Date | number | string): Date | number | string;
+
     sql: string;
 }
 
@@ -24,10 +27,22 @@ export class FieldMap implements IFieldMap {
     fieldName: string;
     primaryKey: boolean;
     identity: boolean;
+    fieldType: "string" | "number" | "date";
 
     get sql(): string {
         return `${this.fieldName} as ${this.propertyName}`;
     }
+    bindValue(value: Date | number | string): Date | number | string {
+        let bindValue = value;
+        if (this.fieldType === "date" && !(bindValue instanceof Date)) {
+            if (typeof bindValue !== "string") {
+              throw new Error(`Invalid value for bind field ${this.fieldName}`);
+            } else {
+              bindValue = new Date(bindValue);
+            }
+          }
+          return bindValue;
+      }
 }
 /**
  * Entity model
@@ -57,13 +72,13 @@ export class Entity<T, CTX extends Context<CTX>> implements IEntity {
         this.parentContext[entityName] = new DbSet(pojso, this, this.parentContext);
     }
 
-    private validateMap(map: any): {} {
-        if (map.fieldName == null && map.propertyName == null) { throw new Error("Field name and/or property name must be defined"); }
+    private validateMap(element: string, map: any): {} {
         if (map.fieldName == null) { map.fieldName = map.propertyName; }
-        if (map.propertyName == null) { map.propertyName = map.fieldName; }
+        if (map.propertyName == null) { map.propertyName = element; }
         if (map.primaryKey == null) { map.primaryKey = false; }
         if (map.identify == null) { map.identify = false; }
 
+        if (map.propertyName !== element) { throw new Error('Property name and Object field do not match. ${element}')}
         return map;
     }
     /**
@@ -83,7 +98,7 @@ export class Entity<T, CTX extends Context<CTX>> implements IEntity {
                         fieldName: map
                     } as IFieldMap;
                 }
-                this.validateMap(map);
+                this.validateMap(element, map);
                 this._fieldMap[element] = map;
                 this._fields.push(Object.assign(new FieldMap(), map));
             }
@@ -127,7 +142,7 @@ export class Entity<T, CTX extends Context<CTX>> implements IEntity {
         const bindObj = {};
         this._fields.forEach(field => {
             if (pojso[field.propertyName] != null) {
-                bindObj[field.fieldName] = pojso[field.propertyName];
+                bindObj[field.fieldName] = field.bindValue(pojso[field.propertyName]);
             }
         });
         return bindObj;

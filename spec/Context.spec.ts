@@ -5,6 +5,7 @@ import { ContextModel } from "../src/ContextModel";
 import { DbSet } from "../src/DbSet";
 import { ChangeProxy } from "../src/ChangeProxy";
 import { Collection } from "../src/Collection";
+import { FieldMap } from "../src/Entity";
 
 const _connectionString = "provider=mysql;host=mysql.rolesvillesoftware.com;user=tiber;password=Tiber$45;database=TiberDM"
 const connection = new Connection(_connectionString);
@@ -12,7 +13,7 @@ const connection = new Connection(_connectionString);
 export class TestModel {
     dbId: number;
     name: string;
-    date: Date;
+    date: any;
 }
 
 export class TestContext extends Context<TestContext> {
@@ -25,7 +26,7 @@ export class TestContext extends Context<TestContext> {
             .map({
                 dbId: { fieldName: "id", propertyName: "dbId", primaryKey: true, identity: true },
                 name: "name",
-                date: "startDate"
+                date: { fieldName: "startDate", fieldType: "date" }
             });
     }
 }
@@ -41,6 +42,11 @@ describe('Context Model Builder', () => {
         expect(context.testModel.entity).toBeDefined();
         expect(context.testModel.entity.fields).toBeDefined();
         expect(context.testModel.entity.fields.length).toEqual(3);
+
+        let startDateField = context.testModel.entity.fields.find(field => field.fieldName === "startDate");
+        expect(startDateField).toBeDefined();
+        expect(startDateField.propertyName).toEqual("date");
+        expect(startDateField.fieldType).toEqual("date")
     });
 
     it('Test key generation', () => {
@@ -333,4 +339,24 @@ describe("Test Select or Create", () => {
 
 });
 
+describe("Test String values for the date", () => {
 
+    it("Test Insert", (done) => {
+        var context = new TestContext(connection);
+        let insertObj = context.testModel.create();
+        insertObj.date = "2013-03-28T04:00:00.000Z"
+        insertObj.name = "Test Date Insert";
+
+        context.saveChanges()
+            .catch(error => {
+                fail(error);
+                done();
+            })
+            .then(data => {
+                expect(insertObj.dbId).toBeDefined();
+                expect(insertObj.dbId).toBeGreaterThan(8);
+
+                done();
+            });
+    });
+});

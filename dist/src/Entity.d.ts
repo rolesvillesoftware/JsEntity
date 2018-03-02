@@ -9,6 +9,8 @@ export interface IFieldMap {
     fieldName: string;
     primaryKey: boolean;
     identity: boolean;
+    fieldType: "string" | "number" | "date";
+    bindValue(value: Date | number | string): Date | number | string;
     sql: string;
 }
 export declare class FieldMap implements IFieldMap {
@@ -16,7 +18,9 @@ export declare class FieldMap implements IFieldMap {
     fieldName: string;
     primaryKey: boolean;
     identity: boolean;
+    fieldType: "string" | "number" | "date";
     readonly sql: string;
+    bindValue(value: Date | number | string): Date | number | string;
 }
 export declare class Entity<T, CTX extends Context<CTX>> implements IEntity {
     private parentContext;
@@ -29,7 +33,7 @@ export declare class Entity<T, CTX extends Context<CTX>> implements IEntity {
     schema: string;
     readonly qualifiedTable: string;
     constructor(parentContext: Context<CTX>, entityName: string, pojso: new () => T, tableName?: string, schema?: string);
-    private validateMap(map);
+    private validateMap(element, map);
     map(maps: {}): Entity<T, CTX>;
     defineKey<R>(keys: string | string[]): Entity<T, CTX>;
     private buildInsertBind(pojso);

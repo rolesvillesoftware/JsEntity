@@ -1,6 +1,6 @@
 {
   "name": "@rolesvillesoftware/tsentity",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "JavaScript ORM Entity Manager",
   "main": "dist/index.js",
   "scripts": {

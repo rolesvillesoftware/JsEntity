@@ -1,4 +1,4 @@
-import { IFieldMap, Entity } from "./Entity";
+import { IFieldMap, Entity, INavigation } from "./Entity";
 import { ChangeProxy } from "./ChangeProxy";
 import { Context } from "./Context";
 export declare class ObjectBuilder {
@@ -12,4 +12,7 @@ export declare class ObjectBuilder {
     static getHostField(key: string): string;
     static buildGet(hostField: string): string;
     static buildSet(hostField: string, isKey: boolean): string;
+    static buildNavigation<R>(dest: R, field: INavigation): void;
+    static buildNavigationGet(): string;
+    static buildNavigationSet(): string;
 }

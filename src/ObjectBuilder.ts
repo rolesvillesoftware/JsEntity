@@ -1,4 +1,4 @@
-import { IFieldMap, Entity } from "./Entity";
+import { IFieldMap, Entity, INavigation } from "./Entity";
 import { ChangeProxy } from "./ChangeProxy";
 import { Context } from "./Context";
 
@@ -14,6 +14,9 @@ export class ObjectBuilder {
 
         entity.fields.forEach(field => {
             ObjectBuilder.buildKey(dest, source, field, create);
+        });
+        entity.navigations.forEach(item => {
+            ObjectBuilder.buildNavigation(dest, item);
         });
         return proxy;
     }
@@ -61,5 +64,19 @@ export class ObjectBuilder {
         } else {
             return `set(value) { if (this.${hostField} !== value) { this.${hostField} = value; this.proxy.setDirty(); } }`;
         }
+    }
+    static buildNavigation<R>(dest: R, field: INavigation) {
+        const defineString = `Object.defineProperty(dest, field.propertyName, {
+            ${ObjectBuilder.buildNavigationGet()},
+            ${ObjectBuilder.buildNavigationSet()},
+            configurable: true
+        })`;
+        eval(defineString);
+    }
+    static buildNavigationGet(): string {
+        return `get() { return "peter"; }`
+    }
+    static buildNavigationSet(): string {
+        return `set(value) { throw new Error("Unable to set read-only navigation field.");  }`;
     }
 }

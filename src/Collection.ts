@@ -1,3 +1,5 @@
+import { Exception } from "@rolesvillesoftware/tools/dist";
+
 export class Collection<T> {
   private _collection: Array<T> = new Array<T>(0);
 
@@ -22,7 +24,7 @@ export class Collection<T> {
   }
   add(obj: T): T {
     if (this.uniqueItems && this._collection.find(item => item === obj) != null) {
-      throw new Error("Item already part of the collection");
+      throw new Exception("Item already part of the collection");
     }
     this._collection.push(obj);
     return obj;
@@ -67,7 +69,7 @@ export class Collection<T> {
     if (this._collection.length > position) {
       return this._collection[position];
     } else {
-      throw new Error("Collection Index out of range");
+      throw new Exception("Collection Index out of range");
     }
   }
 
@@ -80,7 +82,7 @@ export class Collection<T> {
 
   first(): T {
     if (this.isEmpty) {
-      throw new Error("No records found in collection");
+      throw new Exception("No records found in collection");
     }
     return this._collection[0];
   }
@@ -94,10 +96,10 @@ export class Collection<T> {
 
   single(): T {
     if (this.isEmpty) {
-      throw new Error("No records found in collection");
+      throw new Exception("No records found in collection");
     }
     if (!this.isSingle) {
-      throw new Error("More than one record found in collection.");
+      throw new Exception("More than one record found in collection.");
     }
     return this.first();
   }

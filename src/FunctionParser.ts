@@ -1,3 +1,5 @@
+import { Exception } from "@rolesvillesoftware/tools/dist";
+
 export interface IMapping {
     origField: string;
     newField: string;
@@ -39,9 +41,9 @@ export class FunctionParser<T, R> {
     }
 
     private getFields()  {
-        if (this._identifiers.length == 0) { throw new Error("Unable to parse function - no varialbes"); }
-        if (this._identifiers.length > 2) { throw new Error("To many identifier variables"); }
-        if (this._identifiers[0] == this._identifiers[1]) { throw new Error("Unable to determine indentifier variables - non-unique"); }
+        if (this._identifiers.length == 0) { throw new Exception("Unable to parse function - no varialbes"); }
+        if (this._identifiers.length > 2) { throw new Exception("To many identifier variables"); }
+        if (this._identifiers[0] == this._identifiers[1]) { throw new Exception("Unable to determine indentifier variables - non-unique"); }
 
         this._fields = {
             fields: this.function$.match(new RegExp(`${this._identifiers[0]}\\.\\w*`, "g")).map(item => item),
@@ -58,7 +60,7 @@ export class FunctionParser<T, R> {
        return returnString;
     }
     private parseSql() {
-        let _sql = this.function$.match(/\{.*\}/).map(item => item);
+        let _sql = this.function$.match(/\{(.*\n?)*\}/);
         if (_sql.length === 0) { return; }
         _sql[0] = _sql[0].replace(/\{\s*return\s*/i, "").replace(/;\s*}\s*/, "").trim();
         _sql[0] = this.substituteVariables(this._fields.fields, _sql[0], ":");
@@ -69,7 +71,7 @@ export class FunctionParser<T, R> {
     private parseIdentifier() {
         const regex = /\([a-z_$,\s]*?\)/i;
         const identifer = this.function$.match(regex).find(item => (item != null || item.length > 0) && item[0] === "(");
-        if (identifer == null) { throw new Error("Invalid function"); }
+        if (identifer == null) { throw new Exception("Invalid function"); }
 
         const $identifiers = identifer.replace("(", "").replace(")", "").trim();
         this._identifiers = $identifiers.split(",").map(ident => ident.trim());

@@ -10,10 +10,17 @@ import { FieldMap } from "../src/Entity";
 const _connectionString = "provider=mysql;host=mysql.rolesvillesoftware.com;user=tiber;password=Tiber$45;database=TiberDM"
 const connection = new Connection(_connectionString);
 
+export class TestChildren {
+    id: number;
+    ParentId: number;
+    childName: string;
+}
 export class TestModel {
     dbId: number;
     name: string;
     date: any;
+
+    children: Collection<TestChildren>;
 }
 
 export class TestContext extends Context<TestContext> {
@@ -26,7 +33,8 @@ export class TestContext extends Context<TestContext> {
             .map({
                 dbId: { fieldName: "id", propertyName: "dbId", primaryKey: true, identity: true },
                 name: "name",
-                date: { fieldName: "startDate", fieldType: "date" }
+                date: { fieldName: "startDate", fieldType: "date" },
+                children: { childTable: "testChildren", fkField: "ParentId" }
             });
     }
 }
@@ -360,3 +368,24 @@ describe("Test String values for the date", () => {
             });
     });
 });
+
+xdescribe("Test Lazy Loading", () => {
+    const context = new TestContext(connection);
+    xit("Simple forward load", (done) => {
+        context.runThenDispose((c,d) => {
+            c.testModel.select()
+            .execute()
+            .toPromise()
+            .catch(error => {
+                fail(new Error(error));
+                done();
+            })
+            .then(data => {
+                const rows = <Collection<TestModel>>data;
+                if (rows.count > 0) {
+                    const children = rows.toArray()[0];
+                }
+            });
+        });
+    });
+})

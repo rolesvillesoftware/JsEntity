@@ -1,6 +1,7 @@
 import { Collection } from "./Collection";
 import { IFieldMap } from "./Entity";
 import { WhereParser } from "./WhereParser";
+import { Exception } from "@rolesvillesoftware/tools/dist";
 
 export type sqlType = "select" | "update" | "insert" | "delete";
 
@@ -86,10 +87,10 @@ export class SqlGenerator {
   private insertSql(): string {
     if (this._tables == null) {
       if (this._tables.count === 0) {
-        throw new Error("No table definition found for insert");
+        throw new Exception("No table definition found for insert");
       }
       if (this._tables.count > 1) {
-        throw new Error("Currently only one table can be defined for an insert");
+        throw new Exception("Currently only one table can be defined for an insert");
       }
     }
     return `insert into ${this._tables.get(0)} set ?`;

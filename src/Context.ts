@@ -7,7 +7,7 @@ import { Collection } from "./Collection";
 import { ObjectBuilder } from "./ObjectBuilder";
 import { ChangeProxy } from "./ChangeProxy";
 
-import { SafePromise, SafeResult } from "@rolesvillesoftware/tools/dist";
+import { SafePromise, SafeResult, Exception } from "@rolesvillesoftware/tools/dist";
 
 export { IConnectionString, IQueryResult } from "./MySqlConnection";
 
@@ -54,14 +54,14 @@ export abstract class Context<X extends Context<X>> {
   dbSet<T>(entityName: string, pojso: new () => T): DbSet<T, X> {
     const entity = this._contextModel.entities[entityName];
     if (entity == null) {
-      throw new Error(`Entity ${entity} not defined`);
+      throw new Exception(`Entity ${entity} not defined`);
     }
     return new DbSet<T, X>(pojso, entity, this);
   }
 
   attach<T>(proxy: ChangeProxy<T, X>): T {
     if (!(proxy instanceof ChangeProxy)) {
-      throw new Error("Object not context proxy");
+      throw new Exception("Object not context proxy");
     } else {
       this._attached.add(proxy);
       return proxy.obj;
@@ -84,10 +84,10 @@ export abstract class Context<X extends Context<X>> {
             result = await SafePromise.run(() => proxy.entity.insert(proxy.obj));
             break;
           case "delete":
-            throw new Error("Delete not supported yet");
+            throw new Exception("Delete not supported yet");
         }
         if (result != null && result.isError) {
-          throw new Error(result.error);
+          throw new Exception(result.error);
         }
       }
     }

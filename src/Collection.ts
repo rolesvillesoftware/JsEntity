@@ -31,10 +31,9 @@ export class Collection<T> {
   }
 
   addRange(objs: T[]): Collection<T> {
-    if (objs == null || objs.length === 0 || !(objs instanceof Array)) {
-      return;
+    if (objs != null && objs instanceof Array && objs.length > 0) {
+        this._collection = this._collection.concat(objs);
     }
-    this._collection = this._collection.concat(objs);
     return this;
   }
 
